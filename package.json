@@ -1,7 +1,7 @@
 {
-  "name": "hostedspleeter",
+  "name": "track-separator",
   "version": "1.0.0",
-  "description": "a hosted instance of track separation ML from Deezer",
+  "description": "a hosted instance of spleeter track separation ML from Deezer",
   "main": "index.js",
   "scripts": {
     "start": "nodemon index.js",
