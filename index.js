@@ -4,9 +4,10 @@ dotenv.config();
 const express = require('express');
 const httpStatusCodes = require('http-status-codes');
 const upload = require('./upload.js');
-const runPython = require('./pyshell.js');
 const fs = require('fs');
 const path = require('path');
+const runPython = require('./pyshell.js');
+const zip = require('./zip.js');
 
 //// app stuff
 const app = express();
@@ -19,11 +20,14 @@ app.get('/', (req, res) => {
   res.sendFile("./public/index.html");
 });
 app.post('/upload', upload.single('inputFile'), (req, res) => {
-  // todo: real page content
-  res.render('index', {
+  let pageVars = {
     filename: req.file.originalname,
-    model: req.body.inputModel // todo: validate req.body.inputModel enum
-  });
+    model: req.body.inputModel, // todo: validate req.body.inputModel enum
+    download: null
+  };
+
+  // todo: real page content
+  // res.render('index', pageVars);
 
   const fileNameNoExt = path.basename(
     req.file.filename,
@@ -39,7 +43,16 @@ app.post('/upload', upload.single('inputFile'), (req, res) => {
   };
   const callbacks = {
     onMsg: msg => console.log(`fromPython: ${msg}`),
-    onComplete: () => {}
+    onComplete: () => {
+      const outputFile = path.join(__dirname, process.env.DOWNLOADS, `${req.file.originalname}.zip`);
+      zip(dir, outputFile)
+        .then(() => {
+          pageVars.download = outputFile;
+          res.render('index', pageVars);
+        }).catch(() => {
+          //err
+        })
+    }
   };
 
   runPython('spleet.py', options, callbacks);
