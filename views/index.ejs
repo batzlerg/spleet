@@ -2,13 +2,37 @@
 <html lang="en" dir="ltr">
   <head>
     <meta charset="utf-8">
-    <title>Track Split Tool</title>
+    <title>Track Separator Tool</title>
+    <link rel="stylesheet" href="css/style.css">
   </head>
-  <body>
-    <p>File: <%= filename %></p>
-    <p>Model used: <%= model %></p>
-    <%if (download) { %>
-      <p>download path: <%= download %></p>
-    <% } %>
+  <body id="wrapper">
+    <div id="content">
+      <h1>Track Separator</h1>
+      <div id="subtitle">
+        <p>Harness the power of machine learning to split any audio file into its respective tracks!</p>
+        <p>Upload a music track, select how you want it to be split, and download the result.</p>
+      </div>
+      <form action="/upload" method="post" enctype="multipart/form-data">
+        <label for="inputFile">Input File</label>
+        <input type="file" name="inputFile" />
+        <label for="inputModel">Spleeter Model</label>
+        <div class="selectWrapper">
+          <select class="chooseModel" name="inputModel">
+            <option value="2stems">2 stems - vocals & accompaniment</option>
+            <option value="4stems">4stems - vocals, drums, bass, other</option>
+            <option value="5stems">5stems - vocals, drums, bass, piano, other</option>
+          </select>
+        </div>
+        <input type="submit" value="split into tracks" id="submit">
+      </form>
+      <% if (download) { %>
+        <div id="results">
+          <a href="<%= download %>"></p>
+        </div>
+      <% } %>
+    </div>
+    <footer>
+      <p>Uses <a href="https://github.com/deezer/spleeter">Spleeter ML library</a>.</p>
+    </footer>
   </body>
 </html>

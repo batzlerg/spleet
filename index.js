@@ -17,7 +17,10 @@ app.use(express.static("public"));
 //// routes
 // todo: move routes to their own file
 app.get('/', (req, res) => {
-  res.sendFile("./public/index.html");
+  let pageVars = {
+    download: null
+  };
+  res.render('index', pageVars);
 });
 app.post('/upload', upload.single('inputFile'), (req, res) => {
   let pageVars = {
