@@ -12,24 +12,20 @@
         <p>Harness the power of machine learning to split any audio file into its respective tracks!</p>
         <p>Upload a music track, select how you want it to be split, and download the result.</p>
       </div>
-      <form action="/upload" method="post" enctype="multipart/form-data">
+      <form action="/upload" method="post" enctype="multipart/form-data" id="inputForm">
         <label for="inputFile">Input File</label>
-        <input type="file" name="inputFile" />
+        <input type="file" name="inputFile"/>
         <label for="inputModel">Spleeter Model</label>
         <div class="selectWrapper">
           <select class="chooseModel" name="inputModel">
             <option value="2stems">2 stems - vocals & accompaniment</option>
-            <option value="4stems">4stems - vocals, drums, bass, other</option>
-            <option value="5stems">5stems - vocals, drums, bass, piano, other</option>
+            <option value="4stems">4 stems - vocals, drums, bass, other</option>
+            <option value="5stems">5 stems - vocals, drums, bass, piano, other</option>
           </select>
         </div>
-        <input type="submit" value="split into tracks" id="submit">
+        <input type="submit" value="split into tracks" id="submit" />
       </form>
-      <% if (download) { %>
-        <div id="results">
-          <a href="<%= download %>"></p>
-        </div>
-      <% } %>
+      <div id="results" style="display:none"></div>
     </div>
     <footer>
       <p>Uses <a href="https://github.com/deezer/spleeter">Spleeter ML library</a>.</p>

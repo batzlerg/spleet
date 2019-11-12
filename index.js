@@ -11,16 +11,12 @@ const zip = require('./zip.js');
 
 //// app stuff
 const app = express();
-app.set('view engine', 'ejs');
 app.use(express.static("public"));
 
 //// routes
 // todo: move routes to their own file
 app.get('/', (req, res) => {
-  let pageVars = {
-    download: null
-  };
-  res.render('index', pageVars);
+  res.sendFile('index.html');
 });
 app.post('/upload', upload.single('inputFile'), (req, res) => {
   let pageVars = {
@@ -28,9 +24,6 @@ app.post('/upload', upload.single('inputFile'), (req, res) => {
     model: req.body.inputModel, // todo: validate req.body.inputModel enum
     download: null
   };
-
-  // todo: real page content
-  // res.render('index', pageVars);
 
   const fileNameNoExt = path.basename(
     req.file.filename,
@@ -50,8 +43,10 @@ app.post('/upload', upload.single('inputFile'), (req, res) => {
       const outputFile = path.join(__dirname, process.env.DOWNLOADS, `${req.file.originalname}.zip`);
       zip(dir, outputFile)
         .then(() => {
-          pageVars.download = outputFile;
-          res.render('index', pageVars);
+          // todo: web socket push
+          res.send({
+            download: outputFile
+          });
         }).catch(() => {
           //err
         })
