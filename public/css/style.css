@@ -8,6 +8,10 @@ h1 {
   margin-bottom: 1rem;
 }
 
+a {
+  color: #1e88e5;
+}
+
 #subtitle {
   margin: 2rem 0;
 }
@@ -22,9 +26,6 @@ form {
   grid-template-columns: 2.5fr 7.5fr;
   grid-template-rows: 4rem 4rem 3rem;
   grid-column-gap: 1rem;
-
-  background-color: #eee;
-  padding: 2rem;
 }
 
 form label {
@@ -47,6 +48,25 @@ form input, form select {
   background-color: #1e88e5;
   color: #fff;
   border-radius: 5px;
+}
+
+#submit:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+#results p, #results a {
+  line-height: 2rem;
+  margin: 0;
+}
+
+.box {
+  background-color: #eee;
+  padding: 2rem;
+}
+
+.filename {
+  color: forestgreen;
 }
 
 #wrapper {
