@@ -23,9 +23,19 @@ async function run() {
     console.log(e);
     switch (e.data.type) {
       case 'create-link':
+        // create DOM download link
         const downloadLink = document.getElementById('fileDownload');
         downloadLink.setAttribute('href', e.data.download);
         downloadLink.style.display = "inline-block";
+        // update messages to reflect status
+        const removable = [
+          ...document.querySelectorAll('.extra'),
+          document.getElementById('first')
+        ];
+        for (let e of removable) {
+          e.remove();
+        }
+        document.getElementById('second').style.display = 'inline-block'
         break;
       case 'trigger-download':
         window.location = e.data.download;

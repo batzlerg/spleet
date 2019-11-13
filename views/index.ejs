@@ -29,10 +29,12 @@
       <% if (file) { %>
       <br>
       <div id="results" class="box">
-        <p><i class="filename"><%- displayName %></i> has been uploaded successfully.</p>
-        <p>You will recieve a push notification when your stems are ready for download.</p>
-        <p>There are <%- jobsAhead %> jobs ahead of yours in the queue.</p>
-        <a href="" id="fileDownload" style="display:none">Click here to download <%- displayName %> stems</a>
+        <p>
+          <i class="filename"><%- displayName %></i> has been <span id="first">uploaded</span><span id="second">processed</span> successfully.
+        </p>
+        <p class="extra">You will recieve a push notification when your stems are ready for download.</p>
+        <p class="extra">There are <%- jobsAhead %> jobs ahead of yours in the queue.</p>
+        <a href="" id="fileDownload">Click here to download "<%- displayName %>" stems</a>
       </div>
       <% } %>
     </div>

@@ -76,3 +76,7 @@ form input, form select {
   display: grid;
   grid-template-rows: 1fr auto;
 }
+
+#fileDownload, #second {
+  display: none;
+}

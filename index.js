@@ -9,11 +9,8 @@ const path = require('path');
 const runPython = require('./pyshell.js');
 const zip = require('./zip.js');
 const webpush = require('web-push');
-
-//// app stuff
-const app = express();
-app.use(express.static("public"));
-app.set('view engine', 'ejs');
+const queue = require('queue');
+let q = queue({ autostart: true });
 
 //// used for web push notification
 webpush.setVapidDetails(
@@ -22,9 +19,10 @@ webpush.setVapidDetails(
   process.env.PRIVATE_VAPID_KEY
 );
 
-//// queue notification
-// todo: real queue
-let fakeQueue = [];
+//// app stuff
+const app = express();
+app.use(express.static("public"));
+app.set('view engine', 'ejs');
 
 //// routes
 // todo: move routes to their own file
@@ -32,8 +30,8 @@ app.get('/', (req, res) => {
   res.render('index', { file: null });
 });
 app.post('/', upload.single('inputFile'), (req, res) => {
-  const displayName = req.file.originalname.length > 20
-    ? `${req.file.originalname.slice(0, 20)}...`
+  const displayName = req.file.originalname.length > 30
+    ? `${req.file.originalname.slice(0, 30)}...`
     : req.file.originalname;
   const queueObj = {
     file: req.file,
@@ -41,9 +39,10 @@ app.post('/', upload.single('inputFile'), (req, res) => {
     inputModel: req.body.inputModel,
     pushSubscription: JSON.parse(req.body.pushSubscription)
   };
-  fakeQueue.push(queueObj);
-  runQueueJob();
-  res.render('index', {...queueObj, jobsAhead: fakeQueue.length});
+  q.push(cb => {
+    runQueueJob(queueObj, cb);
+  });
+  res.render('index', {...queueObj, jobsAhead: q.length - 1});
   webpush.sendNotification(
     queueObj.pushSubscription,
     JSON.stringify({ title: 'Your file has been uploaded successfully' })
@@ -57,13 +56,10 @@ app.listen(process.env.PORT, () => {
   console.log(`listening on port ${process.env.PORT}`);
 });
 
-function runQueueJob() {
-  let queueObj = fakeQueue[fakeQueue.length - 1];
-  // todo: schedule / get specific job
-
+function runQueueJob(job) {
   const fileNameNoExt = path.basename(
-    queueObj.file.filename,
-    path.extname(queueObj.file.filename)
+    job.file.filename,
+    path.extname(job.file.filename)
   );
   const dir = path.join(__dirname, process.env.DOWNLOADS, fileNameNoExt);
   fs.mkdirSync(dir);
@@ -71,24 +67,25 @@ function runQueueJob() {
   const options = {
     mode: 'text',
     pythonPath: process.env.PYTHON,
-    args: [queueObj.inputModel, queueObj.file.path, dir]
+    args: [job.inputModel, job.file.path, dir]
   };
   console.log(options.args);
   const callbacks = {
     onMsg: msg => console.log(`fromPython: ${msg}`),
     onComplete: () => {
-      const outputFile = `${queueObj.file.filename}.zip`;
+      const outputFile = `${job.file.filename}.zip`;
       const outputFilePath = path.join(__dirname, process.env.DOWNLOADS, outputFile);
       zip(dir, outputFilePath)
         .then(() => {
           // todo: outputFile to download link
           webpush.sendNotification(
-            queueObj.pushSubscription,
+            job.pushSubscription,
             JSON.stringify({
               title: 'Your file is ready!',
               download: `download/${outputFile}`
             })
           );
+          cb();
         }).catch((err) => {
           // todo: revisit
           if (err.stack) {
@@ -96,6 +93,7 @@ function runQueueJob() {
           } else {
             console.error(err)
           }
+          cb();
         })
     }
   };

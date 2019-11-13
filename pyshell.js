@@ -8,7 +8,7 @@ module.exports = (filename, options, callbacks) => {
     // https://github.com/tensorflow/tensorflow/blob/master/tensorflow/python/platform/tf_logging.py#L116-L120
 
     // todo: parse these messages and translate them into progress indicators
-    callbacks.onMsg(msg);
+    // callbacks.onMsg(msg);
   });
   // end the input stream and allow the process to exit
   pyshell.end(function (err, code, signal) {
