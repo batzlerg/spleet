@@ -56,7 +56,7 @@ app.listen(process.env.PORT, () => {
   console.log(`listening on port ${process.env.PORT}`);
 });
 
-function runQueueJob(job) {
+function runQueueJob(job, cb) {
   const fileNameNoExt = path.basename(
     job.file.filename,
     path.extname(job.file.filename)
@@ -85,8 +85,9 @@ function runQueueJob(job) {
               download: `download/${outputFile}`
             })
           );
-          cb();
-        }).catch((err) => {
+        })
+        .then(cb)
+        .catch((err) => {
           // todo: revisit
           if (err.stack) {
             console.error(err.stack);
