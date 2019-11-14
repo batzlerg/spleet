@@ -29,15 +29,16 @@ function requestPermission() {
 }
 
 function handlePermission(permission) {
+  const permissStatement = document.getElementById('pushPermission');
   switch (permission) {
     case "granted":
+      permissStatement.remove();
       console.log('Registering service worker');
       setupServiceWorker();
       break;
     case "denied":
       // fall-through case
     default:
-      const permissStatement = document.getElementById('pushPermission');
       makeElVisible(permissStatement, "block");
       break;
   }
