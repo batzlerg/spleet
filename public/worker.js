@@ -1,10 +1,18 @@
 console.log('Loaded service worker!');
 
-self.addEventListener('push', evt => {
-  const data = evt.data.json();
-  console.log('Got push', data);
+self.addEventListener('install', e => {
+  e.waitUntil(self.skipWaiting()); // Activate worker immediately
+});
+self.addEventListener('activate', e => {
+  e.waitUntil(self.clients.claim()); // Become available to all pages
+});
+
+self.addEventListener('push', e => {
+  const data = e.data.json();
+  self.console.log('Got push', data);
   self.registration.showNotification(data.title, {
-    body: data.download ? 'Click here to download' : 'You will recieve a notification when your stems are ready for download'
+    body: data.download ? 'Click here to download' : 'You will recieve a notification when your stems are ready for download',
+    data: data
   });
   if (data.download) {
     // tell the client to create an in-page DOM link to the file in case the
@@ -16,17 +24,20 @@ self.addEventListener('push', evt => {
       }));
     });
   }
-  self.addEventListener('notificationclick', evt => {
-    if (data.download) {
-      // tell the client to immediately trigger the file download
-      self.clients.matchAll().then(clients => {
-        clients.forEach(client => client.postMessage({
-          type: 'trigger-download',
-          download: data.download
-        }));
-      });
-    } else {
-      evt.notification.close();
-    }
-  });
+});
+
+self.addEventListener('notificationclick', e => {
+  self.console.log('clicked');
+  const data = e.notification.data;
+  self.console.log(data);
+  if (data.download) {
+    // tell the client to immediately trigger the file download
+    self.clients.matchAll().then(clients => {
+      clients.forEach(client => client.postMessage({
+        type: 'trigger-download',
+        download: data.download,
+        fileId: data.fileId
+      }));
+    });
+  }
 });

@@ -77,6 +77,15 @@ form input, form select {
   grid-template-rows: 1fr auto;
 }
 
-#fileDownload, #second {
+#pushPermission, #fileDownload, #second {
   display: none;
+}
+
+#pushPermission {
+  color: red;
+}
+
+#requestPermission {
+  display: block;
+  margin: .5rem 0;
 }

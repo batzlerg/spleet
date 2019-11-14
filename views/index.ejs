@@ -11,10 +11,13 @@
       <div id="subtitle">
         <p>Harness the power of machine learning to split any audio file into its respective tracks!</p>
         <p>Upload a music track, select how you want it to be split, and download the result.</p>
+        <p id="pushPermission">This app uses push notifications to alert you about the status of your track.
+          <a href="#" id="requestPermission" onclick="requestPermission()">Click here to allow</a>
+        </p>
       </div>
       <form action="/" method="post" enctype="multipart/form-data" class="box" id="inputForm">
         <label for="inputFile">Input File</label>
-        <input type="file" name="inputFile"/>
+        <input type="file" name="inputFile" onchange="validateFile(this)" />
         <label for="inputModel">Spleeter Model</label>
         <div class="selectWrapper">
           <select class="chooseModel" name="inputModel">
@@ -33,8 +36,12 @@
           <i class="filename"><%- displayName %></i> has been <span id="first">uploaded</span><span id="second">processed</span> successfully.
         </p>
         <p class="extra">You will recieve a push notification when your stems are ready for download.</p>
+        <% if (jobsAhead > 0) { %>
         <p class="extra">There are <%- jobsAhead %> jobs ahead of yours in the queue.</p>
-        <a href="" id="fileDownload">Click here to download "<%- displayName %>" stems</a>
+        <% } %>
+        <a href="" target='_blank' id="fileDownload" data-fileId="<%- fileId %>">
+          Click here to download "<%- displayName %>" stems
+        </a>
       </div>
       <% } %>
     </div>
