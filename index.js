@@ -13,7 +13,7 @@ const webpush = require('web-push');
 const queue = require('queue');
 let q = queue({ autostart: true });
 
-//// used for web push notification
+// set key info for push notifications
 webpush.setVapidDetails(
   'mailto:graham@grahammak.es',
   process.env.PUBLIC_VAPID_KEY,
@@ -26,15 +26,17 @@ app.use(express.static("public"));
 app.set('view engine', 'ejs');
 
 //// routes
-// todo: move routes to their own file
 app.get('/', (req, res) => {
   res.render('index', { file: null });
 });
+
 app.post('/', upload.single('inputFile'), (req, res) => {
-  // used for in-page confirmation of upload success
-  const displayName = req.file.originalname.length > 30
-    ? `${req.file.originalname.slice(0, 30)}...`
-    : req.file.originalname;
+  // displayName is used for in-page confirmation of upload success
+  const origName = req.file.originalname;
+  const displayName = origName.length > 30
+    ? `${origName.slice(0, 30)}...`
+    : origName;
+
   // create job object for the queue
   const queueObj = {
     file: req.file,
@@ -43,18 +45,27 @@ app.post('/', upload.single('inputFile'), (req, res) => {
     inputModel: req.body.inputModel,
     pushSubscription: JSON.parse(req.body.pushSubscription)
   };
+
   // add job to queue
   q.push(cb => runQueueJob(queueObj, cb));
+
   // send page with necessary values from upload / queue
+  // todo: firefox is buggy handling service workers between page reloads
+  // handle upload via ajax and return values only instead of EJS rendered page
   res.render('index', {...queueObj, jobsAhead: q.length - 1});
+
   // notify the user of successful upload
-  webpush.sendNotification(
-    queueObj.pushSubscription,
-    JSON.stringify({
-      title: 'Your file has been uploaded successfully',
-      fileId: queueObj.fileId
-    })
-  ).catch(err => console.error(err.stack))
+  try {
+    webpush.sendNotification(
+      queueObj.pushSubscription,
+      JSON.stringify({
+        title: 'Your file has been uploaded successfully',
+        fileId: queueObj.fileId
+      })
+    );
+  } catch(err) {
+    handleErr(err);
+  }
 });
 
 // serve downloadable files from completed jobs folder
@@ -78,15 +89,10 @@ function runQueueJob(job, cb) {
   fs.mkdirSync(jobDir);
   console.log(`successfully created ${jobDir}`);
 
-  // process upload via python script
-  const options = {
-    mode: 'text',
-    pythonPath: process.env.PYTHON,
-    args: [job.inputModel, job.file.path, jobDir]
-  };
+  // selectively examine python stderr output (not stdout, tensorflow is weird)
+  // so we can alert the user when the script begins processing
   let hasSentMsg = false;
   const onMsg = msg => {
-    // console.log(`fromPython: ${msg}`);
     if (!hasSentMsg) {
       webpush.sendNotification(
         job.pushSubscription,
@@ -98,54 +104,75 @@ function runQueueJob(job, cb) {
       hasSentMsg = true;
     }
   };
-  const onComplete = () => {
+
+  // callback for python script completion
+  const onComplete = async () => {
     const outputFile = `${job.file.filename}.zip`;
-    zip(jobDir, path.join(__dirname, process.env.DOWNLOADS, outputFile))
-      .then(() => {
-        webpush.sendNotification(
-          job.pushSubscription,
-          JSON.stringify({
-            title: 'Your file is ready!',
-            download: `download/${outputFile}`,
-            fileId: job.fileId
-          })
-        );
-      })
-      // clean up temp directory after files are zipped/ready for download
-      .then(() => new Promise((resolve, reject) => {
-        rimraf(jobDir, err => {
-          if (err) {
-            reject(err);
-          }
-          console.log(`successfully deleted ${jobDir}`);
-          resolve();
-        });
-      }))
-      .then(() => new Promise((resolve, reject) => {
-        const uploadedFilePath = path.join(
-          __dirname,
-          process.env.UPLOADS,
-          job.file.filename
-        );
-        fs.unlink(uploadedFilePath, err => {
-          if (err) {
-            reject(err);
-          }
-          console.log(`successfully deleted ${uploadedFilePath}`);
-          resolve();
-        });
-      }))
-      .then(cb)
-      .catch((err) => {
-        // todo: revisit
-        if (err.stack) {
-          console.error(err.stack);
-        } else {
-          console.error(err)
-        }
-        cb();
-      });
+    const outputFilePath = path.join(
+      __dirname,
+      process.env.DOWNLOADS,
+      outputFile
+    );
+    const inputFilePath = path.join(
+      __dirname,
+      process.env.UPLOADS,
+      job.file.filename
+    );
+
+    // zip file for download convenience (and bandwidth)
+    try {
+      await zip(jobDir, outputFilePath);
+      console.log(`successfully zipped ${outputFilePath}`);
+
+      // notify of completion
+      webpush.sendNotification(
+        job.pushSubscription,
+        JSON.stringify({
+          title: 'Your file is ready!',
+          download: `download/${outputFile}`,
+          fileId: job.fileId
+        })
+      );
+    } catch (err) {
+      handleError(err);
+    }
+
+    // delete temp directory after files are zipped/ready for download
+    try {
+      await fs.promises.rmdir(jobDir, { recursive: true });
+      console.log(`successfully deleted ${jobDir}`);
+    } catch (err) {
+      handleError(err);
+    }
+
+    // delete uploaded file
+    try {
+      await fs.promises.unlink(inputFilePath);
+      console.log(`successfully deleted ${inputFilePath}`);
+    } catch (err) {
+      handleErr(err);
+    }
+
+    // complete job and allow the queue to advance
+    cb();
+  };
+
+  // run the actual python script
+  const options = {
+    mode: 'text',
+    pythonPath: process.env.PYTHON,
+    args: [job.inputModel, job.file.path, jobDir]
   };
   runPython('spleet.py', options, { onMsg, onComplete });
   console.log('job initiated for: ', options.args);
+}
+
+// helper for consistent error handling
+function handleError() {
+  console.log('asdf');
+  if (err.stack) {
+    console.error(err.stack);
+  } else {
+    console.error(err)
+  }
 }
