@@ -112,17 +112,29 @@ function runQueueJob(job, cb) {
         );
       })
       // clean up temp directory after files are zipped/ready for download
-      .then(() => {
-        return new Promise((resolve, reject) => {
-          rimraf(jobDir, err => {
-            if (err) {
-              reject(err);
-            }
-            console.log(`successfully deleted ${jobDir}`);
-            resolve();
-          });
+      .then(() => new Promise((resolve, reject) => {
+        rimraf(jobDir, err => {
+          if (err) {
+            reject(err);
+          }
+          console.log(`successfully deleted ${jobDir}`);
+          resolve();
         });
-      })
+      }))
+      .then(() => new Promise((resolve, reject) => {
+        const uploadedFilePath = path.join(
+          __dirname,
+          process.env.UPLOADS,
+          job.file.filename
+        );
+        fs.unlink(uploadedFilePath, err => {
+          if (err) {
+            reject(err);
+          }
+          console.log(`successfully deleted ${uploadedFilePath}`);
+          resolve();
+        });
+      }))
       .then(cb)
       .catch((err) => {
         // todo: revisit
