@@ -5,7 +5,6 @@ const express = require('express');
 const httpStatusCodes = require('http-status-codes');
 const upload = require('./upload.js');
 const fs = require('fs');
-const rimraf = require('rimraf');
 const path = require('path');
 const runPython = require('./pyshell.js');
 const zip = require('./zip.js');
