@@ -69,7 +69,7 @@ function runQueueJob(job, cb) {
   );
   const jobDir = path.join(__dirname, process.env.DOWNLOADS, fileNameNoExt);
   fs.mkdirSync(jobDir);
-  console.log(`successfully created ${jobDir}`);
+  console.log(`${job.fileId}: successfully created ${jobDir}`);
 
   // selectively examine python stderr output (not stdout, tensorflow is weird)
   // so we can alert the user when the script begins processing
@@ -104,7 +104,7 @@ function runQueueJob(job, cb) {
     // zip file for download convenience (and bandwidth)
     try {
       await zip(jobDir, outputFilePath);
-      console.log(`successfully zipped ${outputFilePath}`);
+      console.log(`${job.fileId}: successfully zipped ${outputFilePath}`);
 
       // notify of completion
       webpush.sendNotification(
@@ -122,7 +122,7 @@ function runQueueJob(job, cb) {
     // delete temp directory after files are zipped/ready for download
     try {
       await fs.promises.rmdir(jobDir, { recursive: true });
-      console.log(`successfully deleted ${jobDir}`);
+      console.log(`${job.fileId}: successfully deleted ${jobDir}`);
     } catch (err) {
       handleError(err);
     }
@@ -130,10 +130,20 @@ function runQueueJob(job, cb) {
     // delete uploaded file
     try {
       await fs.promises.unlink(inputFilePath);
-      console.log(`successfully deleted ${inputFilePath}`);
+      console.log(`${job.fileId}: successfully deleted ${inputFilePath}`);
     } catch (err) {
       handleErr(err);
     }
+
+    // schedule deletion of zipped downloadable
+    setInterval(async () => {
+      try {
+        await fs.promises.unlink(outputFilePath);
+        console.log(`${job.fileId}: successfully deleted ${outputFilePath}`);
+      } catch (err) {
+        handleErr(err);
+      }
+    }, 7200000); // 2 hours in ms
 
     // complete job and allow the queue to advance
     cb();
@@ -151,7 +161,6 @@ function runQueueJob(job, cb) {
 
 // helper for consistent error handling
 function handleError() {
-  console.log('asdf');
   if (err.stack) {
     console.error(err.stack);
   } else {
