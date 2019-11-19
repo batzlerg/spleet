@@ -1,4 +1,5 @@
 .DS_Store
 .env
+heroku.env
 node_modules
 pretrained_models
