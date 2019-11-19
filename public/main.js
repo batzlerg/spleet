@@ -1,6 +1,6 @@
 const publicVapidKey = 'BF70-gHYzghdf2fCLcpW2f1slA-0PSiqxd8ioeEr5iVqM8_sliW6FRq4x5mAXzHr8irt0W5GgnOMXDBFjIhz7_E';
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   if ('serviceWorker' in navigator && Notification) {
     handlePermission(Notification.permission);
   } else {
@@ -57,37 +57,38 @@ async function setupServiceWorker() {
   } catch (err) {
     console.error(err);
   }
+
   // recieve message from service worker to trigger file download
   navigator.serviceWorker.addEventListener('message', e => {
     const downloadLink = document.getElementById('fileDownload');
+
     // multiple tabs -> single service worker means we have to validate
     // whether the returned download matches the upload from this tab
-
-    console.log(e.data);
-    const isUUIDMatch = downloadLink.dataset.fileId === e.data.fileId;
+    const isUUIDMatch = downloadLink.dataset.fileid === e.data.fileId;
 
     if (isUUIDMatch) {
       switch (e.data.type) {
-      case 'create-link':
-        // create DOM download link
-        const downloadLink = document.getElementById('fileDownload');
-        downloadLink.setAttribute('href', e.data.download);
-        makeElVisible(downloadLink);
-        // update messages to reflect status
-        const removable = [
-          ...document.querySelectorAll('.extra'),
-          document.getElementById('first')
-        ];
-        for (let e of removable) {
-          e.remove();
-        }
-        makeElVisible(document.getElementById('second'));
-        break;
-      case 'trigger-download':
-        window.location = e.data.download;
-        break;
-      default:
-        console.log('msg from service worker: ', e.data);
+        case 'create-link':
+          // create DOM download link
+          const downloadLink = document.getElementById('fileDownload');
+          downloadLink.setAttribute('href', e.data.download);
+          makeElVisible(downloadLink);
+          // update messages to reflect status
+          const removable = [
+            ...document.querySelectorAll('.extra'),
+            document.getElementById('first')
+          ];
+          for (let e of removable) {
+            e.remove();
+          }
+          makeElVisible(document.getElementById('second'));
+          makeElVisible(document.getElementById('expiration'));
+          break;
+        case 'trigger-download':
+          window.location = e.data.download;
+          break;
+        default:
+          console.error('unrecognized msg from service worker: ', e.data);
       }
     }
   });
