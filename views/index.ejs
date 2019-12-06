@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <title>Track Separator Tool</title>
-    <link rel="stylesheet" href="./css/style.css">
+    <link rel="stylesheet" href="<%= process.env.SUBDOMAIN %>/css/style.css">
   </head>
   <body id="wrapper">
     <div id="content">
@@ -49,6 +49,6 @@
     <footer>
       <p>Uses <a href="https://github.com/deezer/spleeter">Spleeter ML library</a>.</p>
     </footer>
-    <script type="application/javascript" src="./main.js"></script>
+    <script type="application/javascript" src="<%= process.env.SUBDOMAIN %>/main.js"></script>
   </body>
 </html>
