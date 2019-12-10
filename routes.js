@@ -17,6 +17,7 @@ router.get(`/`, (req, res) => {
 
 // main route, where all the magic happens
 router.post(`/${process.env.SUBDOMAIN}`, upload.single('inputFile'), (req, res) => {
+  console.log(req.body);
   // displayName is used for in-page confirmation of upload success
   const origName = req.file.originalname;
   const displayName = origName.length > 30
