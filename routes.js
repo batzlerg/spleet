@@ -11,12 +11,12 @@ const q = queue({ autostart: true });
 const express = require('express');
 const router = express.Router();
 
-router.get('/', (req, res) => {
+router.get(`/`, (req, res) => {
   res.render('index', { file: null });
 });
 
 // main route, where all the magic happens
-router.post('/', upload.single('inputFile'), (req, res) => {
+router.post(`/${process.env.SUBDOMAIN}`, upload.single('inputFile'), (req, res) => {
   // displayName is used for in-page confirmation of upload success
   const origName = req.file.originalname;
   const displayName = origName.length > 30
@@ -55,7 +55,7 @@ router.post('/', upload.single('inputFile'), (req, res) => {
 });
 
 // serve downloadable files from completed jobs folder
-router.get('/download/:file', function(req, res) {
+router.get(`/${process.env.SUBDOMAIN}/download/:file`, function(req, res) {
   res.download(`../downloads/${req.params.file}`);
 });
 
