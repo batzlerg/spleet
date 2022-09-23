@@ -20,7 +20,7 @@ museval==0.3.0
 norbert==0.2.1
 numpy==1.17.3
 pandas==0.25.1
-protobuf==3.10.0
+protobuf==3.18.3
 pyaml==19.4.1
 pycparser==2.19
 pyrsistent==0.15.5
